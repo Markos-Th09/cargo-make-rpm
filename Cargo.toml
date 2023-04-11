@@ -1,6 +1,6 @@
 [package]
 name = "cargo-make-rpm"
-version = "1.0.0"
+version = "1.0.1"
 edition = "2021"
 description = "A tool to generate rpm package from a rust project"
 license = "MIT"

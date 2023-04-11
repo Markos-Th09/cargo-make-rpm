@@ -95,19 +95,14 @@ struct Triplet {
 }
 
 impl Triplet {
-    fn rpm_arch(&self) -> Option<String> {
+    fn rpm_arch(&self) -> String {
         match self.arch.as_str() {
-            "x86_64" => Some("x86_64".to_owned()),
-            "aarch64" => Some("aarch64".to_owned()),
-            "armv7" | "arm" if self.libc.as_ref().unwrap().ends_with("hf") => {
-                Some("armhfp".to_owned())
-            }
-            "i386" => Some("i386".to_owned()),
-            "powerpc64" => Some("ppc64".to_owned()),
-            "powerpc64le" => Some("ppc64le".to_owned()),
-            "s390x" => Some("s390x".to_owned()),
-            _ => None,
+            "armv7" | "arm" => "armhfp",
+            "powerpc64" => "ppc64",
+            "powerpc64le" => "ppc64le",
+            arch => arch,
         }
+        .to_owned()
     }
 }
 
@@ -239,9 +234,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         let rpm_path = base.join("../rpm");
         fs::create_dir_all(PathBuf::from(&rpm_path))?;
 
-        let arch = triplet
-            .rpm_arch()
-            .ok_or(format!("Unsupported target arch: {}", triplet.arch))?;
+        let arch = triplet.rpm_arch();
 
         let options = package.metadata.as_ref().and_then(|m| m.rpm.as_ref());
 

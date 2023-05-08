@@ -97,7 +97,13 @@ struct Triplet {
 impl Triplet {
     fn rpm_arch(&self) -> String {
         match self.arch.as_str() {
-            "armv7" | "arm" => "armhfp",
+            "armv7" | "arm" => {
+                if self.libc.as_ref().map_or(true, |libc| libc.ends_with("hf")) {
+                    "armhfp"
+                } else {
+                    "arm-nofp"
+                }
+            }
             "powerpc64" => "ppc64",
             "powerpc64le" => "ppc64le",
             arch => arch,

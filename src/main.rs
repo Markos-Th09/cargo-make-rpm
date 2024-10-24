@@ -192,7 +192,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let triplet = Triplet::from_str(target)?;
 
     if triplet.os != "linux" {
-        eprintln!("warning: You are created for your current OS, not for Linux. Use --target to cross compile for a Linux target.");
+        eprintln!("warning: You are creating for your current OS, not for Linux. Use --target to cross compile for a Linux target.");
     }
 
     let mut build = Command::new("cargo");

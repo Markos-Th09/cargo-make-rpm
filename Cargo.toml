@@ -1,6 +1,6 @@
 [package]
 name = "cargo-make-rpm"
-version = "1.0.1"
+version = "1.0.2"
 edition = "2021"
 description = "A tool to generate rpm package from a rust project"
 license = "MIT"
@@ -10,8 +10,8 @@ repository = "https://github.com/Markos-Th09/cargo-make-rpm"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-clap = { version = "4.2.1", features = ["derive"] }
-regex = "1.7.3"
-rpm = "0.9.0"
-serde = { version = "1.0.159", features = ["derive"] }
-serde_json = "1.0.95"
+clap = { version = "4.5.20", features = ["derive"] }
+regex = "1.11.1"
+rpm = "0.15.1"
+serde = { version = "1.0.213", features = ["derive"] }
+serde_json = "1.0.132"

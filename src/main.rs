@@ -9,7 +9,7 @@ use std::{
 
 use clap::{Parser, ValueEnum};
 use regex::Regex;
-use rpm::{signature::pgp::Signer, Dependency, RPMFileOptions};
+use rpm::{signature::pgp::Signer, Dependency, FileOptions};
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -84,8 +84,9 @@ enum Compression {
     #[default]
     Gzip,
     Zstd,
+    Xz,
+    Bzip2,
 }
-
 #[derive(Debug)]
 struct Triplet {
     arch: String,
@@ -241,10 +242,21 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         fs::create_dir_all(PathBuf::from(&rpm_path))?;
 
         let arch = triplet.rpm_arch();
-
         let options = package.metadata.as_ref().and_then(|m| m.rpm.as_ref());
 
-        let mut rpm = rpm::RPMBuilder::new(
+        let compression = args
+            .compression
+            .unwrap_or(options.map(|r| r.compression).unwrap_or(Compression::Gzip));
+
+        let compression = match compression {
+            Compression::None => rpm::CompressionType::None,
+            Compression::Gzip => rpm::CompressionType::Gzip,
+            Compression::Zstd => rpm::CompressionType::Zstd,
+            Compression::Xz => rpm::CompressionType::Xz,
+            Compression::Bzip2 => rpm::CompressionType::Bzip2,
+        };
+
+        let mut rpm = rpm::PackageBuilder::new(
             &package.name,
             &package.version,
             package.license.as_ref().ok_or("Missing license")?,
@@ -254,19 +266,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 .as_ref()
                 .ok_or(format!("Missing description in crate {}", package.name))?,
         )
-        .compression(rpm::Compressor::from_str(
-            args.compression
-                .unwrap_or(
-                    package
-                        .metadata
-                        .as_ref()
-                        .and_then(|m| m.rpm.as_ref().map(|r| r.compression))
-                        .unwrap_or_default(),
-                )
-                .to_possible_value()
-                .unwrap()
-                .get_name(),
-        )?);
+        .compression(compression);
 
         if !package.authors.is_empty() {
             rpm = rpm.vendor(package.authors.join(", "));
@@ -286,7 +286,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
                 rpm = rpm.with_file(
                     path,
-                    RPMFileOptions::new(format!("/usr/bin/{}", &target.name)).mode(0o100755),
+                    FileOptions::new(format!("/usr/bin/{}", &target.name)).mode(0o100755),
                 )?;
             }
         }
@@ -325,7 +325,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     let filepath = PathBuf::from(filename).join(&crate_dir);
                     rpm = rpm.with_file(
                         &filepath,
-                        RPMFileOptions::new(asset)
+                        FileOptions::new(asset)
                             .mode(pad_permission(u16::from_str_radix(mode, 8)?, &filepath)?),
                     )?;
                 }
